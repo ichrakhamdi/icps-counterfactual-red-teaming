@@ -1,0 +1,11 @@
+{
+  "protocol_name": "local_release_gate",
+  "training_episodes": 220,
+  "evaluation_policy_seeds": [27090801, 27090802],
+  "horizon": 100,
+  "audit_lead": 1,
+  "search_depth": 3,
+  "beam_width": 18,
+  "search_evaluation_budget": 400,
+  "minimum_impact_gain": 0.002
+}

@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the associated IEEE ISIE 2027 paper."
+title: "Counterfactual Red-Teaming for Autonomous ICPS Response"
+type: software
+authors:
+  - family-names: Hamdi
+    given-names: Ichrak
+repository-code: "https://github.com/ichrakhamdi/isie2027-icps-counterfactual-xai"
+license: MIT
+version: 0.1.0
+date-released: 2026-09-08

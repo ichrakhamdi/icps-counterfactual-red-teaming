@@ -1,0 +1,11 @@
+{
+  "protocol_name": "local_smoke",
+  "training_episodes": 80,
+  "evaluation_policy_seeds": [27090801],
+  "horizon": 100,
+  "audit_lead": 1,
+  "search_depth": 2,
+  "beam_width": 8,
+  "search_evaluation_budget": 80,
+  "minimum_impact_gain": 0.001
+}

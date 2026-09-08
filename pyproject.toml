@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "icps-counterfactual-xai"
+version = "0.1.0"
+description = "Physically feasible counterfactual red-teaming for autonomous ICPS responders"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.scripts]
+icps-xai = "icps_xai.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

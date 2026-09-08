@@ -1,0 +1,247 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{url}
+
+\title{Counterfactual Red-Teaming of Autonomous Threat-Response Agents in Industrial Cyber-Physical Systems}
+
+\author{\IEEEauthorblockN{Ichrak Hamdi}
+\IEEEauthorblockA{Department of Computer Science and Software Engineering\\
+Universit\'e Laval, Qu\'ebec, Canada\\
+ichrak.hamdi.1@ulaval.ca}}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+An explanation of an autonomous industrial response is operationally useful
+only if the alternative it describes can occur in the defended system.
+Feature-space counterfactual explanations may change detector scores, process
+measurements, or network events independently, even though those quantities are
+linked by attack prerequisites and process dynamics. This paper formulates
+counterfactual explanation as campaign-level red-teaming of a frozen threat-response
+policy. The proposed black-box search modifies the timing, visibility, duration,
+and intensity of fixed multi-stage campaigns while an independent validator
+enforces network reachability, privilege, temporal, and physical constraints.
+Every candidate is re-executed in a closed-loop three-stage industrial process.
+The returned explanation is the lowest-cost executable campaign that causes a
+weaker response and a larger physical impact. The evaluation compares random,
+feature-level, cyber-valid, and cyber-physical counterfactual generation and
+tests whether explanations remain valid under a higher-fidelity execution
+configuration. The accompanying engineering pilot verifies the complete
+execution path; the confirmatory multi-seed evaluation protocol is fixed before
+the reported comparison is produced.
+\end{abstract}
+
+\begin{IEEEkeywords}
+explainable artificial intelligence, counterfactual explanation, autonomous
+cyber defence, industrial cyber-physical systems, reinforcement learning
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Autonomous cyber-defence agents shorten the interval between an alert and a
+response, a capability that matters when an attack can propagate through a
+controller into a physical process~\cite{kott2019aica}. Their decisions are also
+difficult to inspect. An operator may need to know why an agent isolated an
+engineering workstation, activated a backup controller, or continued to
+monitor. Explainable reinforcement learning addresses this need through feature,
+policy, trajectory, and causal explanations~\cite{milani2024xrl,madumal2020causal}.
+
+Industrial response places an additional requirement on a counterfactual. A
+statement such as ``the response would change if the historian alarm were 0.2
+lower'' need not correspond to any possible campaign. The alarm may be fixed by
+the traffic generated during historian access; the access may require an
+engineering credential; and changing a measurement while holding the related
+flow and tank levels fixed may violate the process dynamics. Such an explanation
+is valid for the policy function but invalid for the system in which the policy
+acts.
+
+This paper uses counterfactual XAI as an offline red-teaming mechanism. Starting
+from a fixed multi-stage campaign and a frozen response policy, it asks which
+smallest executable change to the campaign causes a weaker response and a worse
+physical outcome. The response policy is queried as a black box, while candidate
+campaigns are checked independently and re-executed in closed loop.
+
+The contributions are:
+\begin{enumerate}
+    \item a campaign-level formulation of counterfactual explanation for
+    sequential autonomous industrial response;
+    \item a black-box search whose edits obey attack-chain, network, temporal,
+    and process constraints; and
+    \item a closed-loop protocol measuring decision validity, campaign
+    feasibility, physical impact, edit cost, and transfer validity.
+\end{enumerate}
+
+\section{Related Work and Gap}
+
+Counterfactual explanations identify a small change under which a model would
+return a different decision~\cite{wachter2017counterfactual}. In sequential
+decision-making, the object being explained may be an action or trajectory, and
+the relevant evidence can extend over time~\cite{milani2024xrl}. Causal models
+can distinguish intervention from observation and provide a stronger basis for
+explaining an RL decision~\cite{madumal2020causal}.
+
+Recent autonomous-defence systems increasingly combine temporal reasoning and
+explanation. DeepXplain provides structural, temporal, and policy-level
+explanations for stage-aware APT defence~\cite{phan2026deepxplain}. Zhang et
+al.~\cite{zhang2026explainable} combine a structural causal model, constrained
+response transitions, and adversarial multi-agent policies. These methods
+advance policy transparency, but do not establish that a counterfactual change
+returned to the analyst corresponds to an executable industrial campaign with
+a reproduced physical consequence.
+
+The distinction is material in industrial systems. Stealthy attacks are already
+designed under detector and process constraints~\cite{urbina2016stealthy}, and
+concealment attacks explicitly manipulate evidence while preserving the attack
+objective~\cite{erba2020concealment}. A useful explanation must therefore alter
+the causes of the evidence through permitted tactics, not edit each observed
+feature independently. Faithful environment interfaces and the separation of
+hidden environment state from agent observations are also central to credible
+autonomous-defence evaluation~\cite{hicks2026environments}.
+
+\section{Problem Formulation}
+
+Let a fixed campaign be a temporally ordered sequence
+$\mathcal{C}=(e_1,\ldots,e_m)$. Event $e_j$ contains an attack stage, execution
+time, asset, magnitude, visibility, and duration. Executing $\mathcal{C}$ in an
+industrial environment produces an observation history $H_t$, a response
+$a_t=\pi(H_t)$ from a frozen policy $\pi$, and a physical trajectory $x_{0:T}$.
+
+The edit vector $\Delta$ changes permitted campaign fields and produces
+$\mathcal{C}^{\Delta}$. We seek
+\begin{equation}
+\begin{aligned}
+\Delta^\star = \arg\min_{\Delta}\quad & C(\Delta)\\
+\text{s.t.}\quad
+& \pi(H_{t_a}^{\Delta}) < \pi(H_{t_a}),\\
+& J_{\mathrm{phys}}(\mathcal{C}^{\Delta})
+  -J_{\mathrm{phys}}(\mathcal{C}) \geq \eta,\\
+& \mathcal{C}^{\Delta}\in
+  \mathcal{F}_{\mathrm{atk}}\cap\mathcal{F}_{\mathrm{net}}
+  \cap\mathcal{F}_{\mathrm{time}}\cap\mathcal{F}_{\mathrm{phys}}.
+\end{aligned}
+\label{eq:cf}
+\end{equation}
+Responses are ordered by intervention strength, $t_a$ is the declared audit
+instant before physical impact, and $J_{\mathrm{phys}}$ is maximum departure
+from the nominal operating point after impact. The feasibility sets represent
+attack prerequisites, network reachability and privilege, temporal order, and
+closed-loop physical execution. The edit cost is
+\begin{equation}
+C(\Delta)=\sum_j w_v|\Delta v_j|+w_t|\Delta t_j|/T
+ +w_d|\Delta d_j|/T+w_m|\Delta m_j|,
+\end{equation}
+where $v,t,d,m$ denote visibility, time, duration, and magnitude.
+
+Equation~\eqref{eq:cf} makes the explanation adversarial in purpose but
+diagnostic in use: it identifies a feasible weakness without changing or
+retraining the frozen responder.
+
+\section{Campaign-Constrained Counterfactual Search}
+
+\subsection{Campaign Grammar}
+
+The prototype campaign progresses through credential access, engineering access,
+PLC discovery, historian impairment, measurement replay, and actuator override.
+Events are aligned with ATT\&CK for ICS~\cite{mitreics}. Each stage declares its
+permitted assets and prerequisite stages. For example, PLC discovery requires
+prior engineering access, and measurement replay requires prior historian
+impairment. The physical impact event is held fixed during explanation; the
+search modifies only the evidence-producing preparation path.
+
+Four checks are applied. The attack check requires every prerequisite. The
+network check requires the event's asset to be reachable with the acquired
+privilege. The temporal check enforces prerequisite order and finite durations.
+The physical check executes the candidate and rejects undefined or non-finite
+trajectories. The first three operate before simulation; the fourth cannot be
+replaced by a feature-range check because physically coupled variables evolve
+together.
+
+\subsection{Black-Box Search}
+
+The method uses a bounded beam search. At every depth it generates local changes
+to one campaign event, validates the resulting campaign, executes it with the
+frozen responder, and ranks it by response reduction, impact increase, and edit
+cost. Duplicate campaign signatures are evaluated once. Search terminates at a
+fixed depth, and the least-cost candidate satisfying~\eqref{eq:cf} is revalidated
+and replayed before reporting.
+
+The policy interface contains only \texttt{reset} and \texttt{act}. No gradient,
+Q value, hidden state, or policy parameter is exposed to the explainer. This
+supports the audit of rule-based, value-based, policy-gradient, or hierarchical
+responders through the same interface.
+
+\section{Experimental Design}
+
+\subsection{Process and Response Policy}
+
+The independent evaluation environment contains three coupled tanks, four
+flows, three PLC assets, a historian, an engineering workstation, and separated
+enterprise and control access points. It follows the type of closed-loop
+evaluation enabled by water-treatment testbeds such as SWaT~\cite{mathur2016swat}
+without using its recorded data. Measurement replay changes the delivered level
+while retaining the hidden process state; actuator override changes inlet and
+outlet behavior.
+
+The audited policy is a flat tabular Q-learning responder with exponentially
+weighted evidence memory. It selects monitor, inspect, restrict, or backup.
+Response intensity reduces the active attack effect while imposing an
+availability cost. The policy is frozen before counterfactual generation. This
+baseline supplies a sequential learned decision to explain; it is not presented
+as a new response algorithm.
+
+\subsection{Baselines and Metrics}
+
+Four generators are compared: random valid edits, direct feature-space
+counterfactuals, cyber-valid search without physical-impact ranking, and the
+complete cyber-physical method. Target validity is the fraction that selects a
+weaker response at the audit instant. Cyber feasibility is acceptance by the
+independent campaign validator. Physical validity requires a complete bounded
+trajectory. Further outcomes are edit cost, impact gain, simulator evaluations,
+wall-clock time, and explanation stability across nearby initial conditions.
+
+Selected counterfactuals are then replayed under a smaller integration step,
+measurement quantisation, additional integration substeps, and perturbed process
+coefficients. Counterfactual transfer validity records whether both the weaker
+decision and positive impact gap remain. Training, development, and evaluation
+seeds are disjoint. Confirmatory results will be reported over independent seeds
+using medians, interquartile ranges, and paired bootstrap intervals.
+
+\InputIfFileExists{generated/confirmatory_table.tex}{}{}
+
+\section{Engineering Pilot and Planned Evaluation}
+
+The current software artifact implements the complete path from a validated
+campaign through policy training, frozen-policy execution, counterfactual beam
+search, and generated result files. The generated engineering table, when
+present, demonstrates executable integration across independent policy seeds.
+It is excluded from confirmatory claims. The final evaluation will replace it
+with the frozen baseline comparison, feasibility analysis, ablations, and
+higher-fidelity transfer.
+
+The primary expected comparison concerns validity rather than raw decision-flip
+rate. An unconstrained method may flip decisions frequently while returning
+observations that cannot be generated by any valid campaign. The proposed
+method is expected to trade some sparsity and search time for reproducible
+cyber-physical validity. This trade-off will be reported directly, including
+all invalid candidates rather than silently removing them.
+
+\section{Limitations and Conclusion}
+
+The method explains one frozen responder and searches a declared campaign
+grammar; it cannot expose tactics absent from that grammar. Feasibility is also
+conditional on the fidelity and uncertainty range of the process model. The
+claim is consequently limited to identifying executable counterfactuals under
+the declared cyber and physical model.
+
+This paper formulates explanation of autonomous ICPS response as constrained
+campaign red-teaming. By changing evidence through executable events and
+replaying every candidate in closed loop, it connects a changed response to a
+reproducible physical consequence. The resulting counterfactuals support policy
+audit and provide validated hard campaigns for subsequent work on adaptive
+attacker--defender interaction.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+\end{document}

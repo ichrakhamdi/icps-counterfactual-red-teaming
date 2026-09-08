@@ -1,0 +1,11 @@
+{
+  "seed": 27090001,
+  "training_episodes": 900,
+  "evaluation_seeds": 12,
+  "horizon": 100,
+  "audit_lead": 1,
+  "search_depth": 3,
+  "beam_width": 18,
+  "minimum_impact_gain": 0.002,
+  "response_costs": [0.0, 0.015, 0.06, 0.10]
+}
