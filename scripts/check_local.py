@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-ENV = dict(os.environ, PYTHONPYCACHEPREFIX="/tmp/isie2027_release_pycache")
+ENV = dict(os.environ, PYTHONPYCACHEPREFIX="/tmp/icps_cf_release_pycache")
 
 
 def run(command: list[str], cwd: Path = ROOT) -> None:
@@ -39,7 +39,7 @@ def main() -> None:
     run(["bash", "-n", "cluster/narval/submit.sh"])
     run(["bash", "-n", "cluster/narval/aggregate.sh"])
 
-    with tempfile.TemporaryDirectory(prefix="isie27_gate_", dir="/tmp") as directory:
+    with tempfile.TemporaryDirectory(prefix="icps_cf_gate_", dir="/tmp") as directory:
         first = Path(directory) / "first"
         second = Path(directory) / "second"
         for output in (first, second):
@@ -64,7 +64,7 @@ def main() -> None:
             raise SystemExit(f"thesis-boundary gate failed in {path}: {hits}")
 
     if shutil.which("pdflatex") and shutil.which("bibtex"):
-        tex_env = dict(ENV, TEXMFVAR="/tmp/isie2027_release_texmf")
+        tex_env = dict(ENV, TEXMFVAR="/tmp/icps_cf_release_texmf")
         commands = (
             ["pdflatex", "-interaction=nonstopmode", "-halt-on-error", "main.tex"],
             ["bibtex", "main"],

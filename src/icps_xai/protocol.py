@@ -319,7 +319,9 @@ def aggregate_jobs(config: dict[str, Any], input_dir: Path, destination: Path) -
     commits = {job.get("git_commit") for job in jobs}
     if len(commits) != 1:
         raise ValueError(f"job artifacts come from different commits: {sorted(commits)}")
-    if str(config["protocol_name"]).startswith("isie2027_confirmatory"):
+    if str(config["protocol_name"]).startswith(
+        "icps_counterfactual_red_teaming_confirmatory"
+    ):
         if any(job.get("git_dirty") is True for job in jobs):
             raise ValueError("confirmatory artifacts were produced from a dirty worktree")
     records = [record for job in jobs for record in job["records"]]

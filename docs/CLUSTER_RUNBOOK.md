@@ -4,7 +4,7 @@ The detailed layout and commands are in `cluster/narval/README.md`. Every run
 is isolated under:
 
 ```text
-$SCRATCH/isie2027-icps-counterfactual-xai/runs/<RUN_ID>/
+$SCRATCH/icps-counterfactual-red-teaming/runs/<RUN_ID>/
 ```
 
 Run the local gate from a clean checkout, then submit:
@@ -25,7 +25,7 @@ When other work is already running, reduce concurrency without changing the
 scientific configuration:
 
 ```bash
-export ISIE_ARRAY_SPEC=0-29%4
+export CFRT_ARRAY_SPEC=0-29%4
 ```
 
 After the array finishes:
@@ -39,7 +39,7 @@ It rejects dirty, mixed-commit, missing, duplicate, and wrong-configuration
 artifacts. Final JSON, CSV, LaTeX, and SHA-256 checksums remain inside that
 run's `aggregate` directory.
 
-Set `ISIE_ARCHIVE_ROOT` to a persistent project directory before aggregation
+Set `CFRT_ARCHIVE_ROOT` to a persistent project directory before aggregation
 when a long-term copy is required. Alliance scratch storage is intended for
 temporary high-throughput data, while project storage is intended for durable
 research data.

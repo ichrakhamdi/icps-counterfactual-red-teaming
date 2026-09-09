@@ -9,8 +9,8 @@ if [[ $# -ne 1 ]]; then
 fi
 
 repo_root="$(git rev-parse --show-toplevel)"
-project_slug="isie2027-icps-counterfactual-xai"
-runs_root="${ISIE_RUNS_ROOT:-$SCRATCH/$project_slug/runs}"
+project_slug="icps-counterfactual-red-teaming"
+runs_root="${CFRT_RUNS_ROOT:-$SCRATCH/$project_slug/runs}"
 run_root="$runs_root/$1"
 config="$run_root/meta/cluster.json"
 
@@ -28,7 +28,7 @@ fi
 
 module --force purge
 module load StdEnv/2023
-module load "${ISIE_PYTHON_MODULE:-python/3.11}"
+module load "${CFRT_PYTHON_MODULE:-python/3.11}"
 python_bin="${PYTHON_BIN:-python3}"
 
 mkdir -p "$run_root/aggregate"
@@ -45,8 +45,8 @@ mkdir -p "$run_root/aggregate"
     aggregate/confirmatory_table.tex > aggregate/SHA256SUMS
 )
 
-if [[ -n "${ISIE_ARCHIVE_ROOT:-}" ]]; then
-  archive="$ISIE_ARCHIVE_ROOT/$project_slug/$1"
+if [[ -n "${CFRT_ARCHIVE_ROOT:-}" ]]; then
+  archive="$CFRT_ARCHIVE_ROOT/$project_slug/$1"
   if [[ -e "$archive" ]]; then
     echo "Archive already exists: $archive" >&2
     exit 2

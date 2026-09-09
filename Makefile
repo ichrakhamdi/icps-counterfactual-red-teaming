@@ -1,6 +1,6 @@
 PYTHON ?= python3
-PYCACHE := /tmp/isie2027_counterfactual_xai_pycache
-TEXMFVAR := /tmp/isie2027_counterfactual_xai_texmf
+PYCACHE := /tmp/icps_counterfactual_red_teaming_pycache
+TEXMFVAR := /tmp/icps_counterfactual_red_teaming_texmf
 
 .PHONY: demo study smoke local-gate test paper clean
 
