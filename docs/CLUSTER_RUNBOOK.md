@@ -17,8 +17,16 @@ bash cluster/narval/submit.sh
 
 The submission creates separate `jobs`, `logs`, `meta`, and `aggregate`
 directories. It copies the exact configuration into `meta`, records the commit,
-and refuses to reuse an existing run ID. The array is `0-29%10`: thirty seeds,
+submission time, account, array specification, and Slurm job ID, and refuses to
+reuse an existing run ID. The default array is `0-29%10`: thirty seeds,
 with no more than ten tasks running simultaneously.
+
+When other work is already running, reduce concurrency without changing the
+scientific configuration:
+
+```bash
+export ISIE_ARRAY_SPEC=0-29%4
+```
 
 After the array finishes:
 

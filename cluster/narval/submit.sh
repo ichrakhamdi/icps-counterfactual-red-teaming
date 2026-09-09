@@ -18,6 +18,12 @@ timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 run_id="${1:-${timestamp}-${short_commit}}"
 runs_root="${ISIE_RUNS_ROOT:-$SCRATCH/$project_slug/runs}"
 run_root="$runs_root/$run_id"
+array_spec="${ISIE_ARRAY_SPEC:-0-29%10}"
+
+if [[ ! "$run_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$ ]]; then
+  echo "Run ID must contain only letters, digits, dots, underscores, and hyphens." >&2
+  exit 2
+fi
 
 if [[ -e "$run_root" ]]; then
   echo "Run directory already exists: $run_root" >&2
@@ -29,11 +35,14 @@ cp "$repo_root/configs/cluster.json" "$run_root/meta/cluster.json"
 printf '%s\n' "$commit" > "$run_root/meta/git-commit.txt"
 printf '%s\n' "$repo_root" > "$run_root/meta/repository-path.txt"
 printf '%s\n' "$run_id" > "$run_root/meta/run-id.txt"
+printf '%s\n' "$timestamp" > "$run_root/meta/submitted-utc.txt"
+printf '%s\n' "$SLURM_ACCOUNT" > "$run_root/meta/slurm-account.txt"
+printf '%s\n' "$array_spec" > "$run_root/meta/array-spec.txt"
 
 job_id="$(sbatch --parsable \
   --job-name=isie27-cf \
   --account="$SLURM_ACCOUNT" \
-  --array=0-29%10 \
+  --array="$array_spec" \
   --cpus-per-task=1 \
   --mem=2G \
   --time=01:00:00 \
