@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
-from .campaign import CampaignValidator
-from .domain import Campaign
-from .responder import FrozenResponder
-from .simulation import ICPSSimulator, SimulationConfig
+from ..core.campaign import CampaignValidator
+from ..core.domain import Campaign
+from ..models.responder import FrozenResponder
+from ..simulators.simulation import ICPSSimulator, SimulationConfig
 
 
 @dataclass(frozen=True)

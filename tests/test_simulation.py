@@ -7,11 +7,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from icps_xai.campaign import reference_campaign
-from icps_xai.domain import Observation, ResponseAction
-from icps_xai.simulation import ICPSSimulator
-from icps_xai.feasibility import PhysicalFeasibilityChecker
-from icps_xai.responder import FrozenResponder
+from icps_xai.core.campaign import reference_campaign
+from icps_xai.core.domain import Observation, ResponseAction
+from icps_xai.evaluation.feasibility import PhysicalFeasibilityChecker
+from icps_xai.models.responder import FrozenResponder
+from icps_xai.simulators.simulation import ICPSSimulator
 
 
 class MonitorPolicy:

@@ -7,9 +7,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from icps_xai.campaign import CampaignValidator, campaign_neighbors, reference_campaign
-from icps_xai.domain import AttackStage
-from icps_xai.topology import CyberTopology, DEFAULT_EDGES
+from icps_xai.core.campaign import CampaignValidator, campaign_neighbors, reference_campaign
+from icps_xai.core.domain import AttackStage
+from icps_xai.core.topology import CyberTopology, DEFAULT_EDGES
 
 
 class CampaignTests(unittest.TestCase):

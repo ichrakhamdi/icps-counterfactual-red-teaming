@@ -7,7 +7,7 @@ import hashlib
 import random
 from pathlib import Path
 
-from .domain import Observation, ResponseAction
+from ..core.domain import Observation, ResponseAction
 
 
 StateKey = tuple[int, int, int, int]

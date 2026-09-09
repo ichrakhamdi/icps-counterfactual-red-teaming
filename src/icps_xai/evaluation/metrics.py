@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .domain import ResponseAction, Trace
+from ..core.domain import ResponseAction, Trace
 
 
 TARGETS = (0.66, 0.62, 0.58)
@@ -27,4 +27,3 @@ def peak_action(trace: Trace, start: int, end: int) -> ResponseAction:
 
 def availability(trace: Trace) -> float:
     return sum(step.observation.availability for step in trace.steps) / len(trace.steps)
-

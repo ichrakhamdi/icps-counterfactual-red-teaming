@@ -5,11 +5,11 @@ from __future__ import annotations
 from dataclasses import dataclass
 import random
 
-from .campaign import CampaignValidator, campaign_neighbors
-from .domain import AttackStage, Campaign, CampaignEdit, CounterfactualResult
-from .metrics import maximum_band_deviation
-from .responder import FrozenResponder
-from .simulation import ICPSSimulator
+from ..core.campaign import CampaignValidator, campaign_neighbors
+from ..core.domain import AttackStage, Campaign, CampaignEdit, CounterfactualResult
+from ..evaluation.metrics import maximum_band_deviation
+from ..models.responder import FrozenResponder
+from ..simulators.simulation import ICPSSimulator
 
 
 @dataclass(frozen=True)
@@ -128,7 +128,7 @@ class CounterfactualSearch:
                 -(node.impact - factual_impact),
             ),
         )
-        from .domain import ResponseAction
+        from ..core.domain import ResponseAction
 
         return CounterfactualResult(
             factual,
@@ -184,7 +184,7 @@ class RandomValidSearch(CounterfactualSearch):
             solutions,
             key=lambda node: (node.cost, -(factual_action - node.action_value), -(node.impact - factual_impact)),
         )
-        from .domain import ResponseAction
+        from ..core.domain import ResponseAction
 
         return CounterfactualResult(
             factual,

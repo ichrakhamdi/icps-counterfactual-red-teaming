@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import random
 
-from .domain import PlantState, ResponseAction
+from ..core.domain import PlantState, ResponseAction
 
 
 def _clip(value: float, low: float, high: float) -> float:
@@ -89,4 +89,3 @@ class ThreeStageWaterPlant:
         self.state = PlantState(tuple(levels), (inlet, flow12, flow23, outlet))  # type: ignore[arg-type]
         self._history.append(self.state.levels)
         return self.state
-

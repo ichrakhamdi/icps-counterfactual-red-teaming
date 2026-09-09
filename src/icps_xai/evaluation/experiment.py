@@ -9,12 +9,12 @@ import statistics
 from dataclasses import asdict
 from pathlib import Path
 
-from .campaign import reference_campaign
-from .counterfactual import CounterfactualSearch, SearchConfig
-from .domain import AttackStage, Campaign
+from ..core.campaign import reference_campaign
+from ..core.domain import AttackStage, Campaign
+from ..explainers.counterfactual import CounterfactualSearch, SearchConfig
+from ..models.responder import QLearningResponder
+from ..simulators.simulation import ICPSSimulator, SimulationConfig
 from .metrics import maximum_band_deviation
-from .responder import QLearningResponder
-from .simulation import ICPSSimulator, SimulationConfig
 
 
 def _training_campaign(rng: random.Random, episode: int) -> Campaign:
@@ -71,7 +71,7 @@ def run_pilot(
     result = search.search(factual, frozen)
 
     if write_artifacts:
-        root.joinpath("results").mkdir(exist_ok=True)
+        root.joinpath("results").mkdir(parents=True, exist_ok=True)
         learner.save(root / "results" / "frozen_q_table.json")
     if result is None:
         payload: dict[str, object] = {
@@ -150,7 +150,7 @@ def run_study(config: dict[str, object], root: Path) -> dict[str, object]:
 
     artifact = {"status": "engineering_multiseed", "summary": summary, "runs": rows}
     results_dir = root / "results"
-    results_dir.mkdir(exist_ok=True)
+    results_dir.mkdir(parents=True, exist_ok=True)
     (results_dir / "study.json").write_text(json.dumps(artifact, indent=2) + "\n", encoding="utf-8")
     _write_study_csv(results_dir / "study.csv", rows)
     _write_study_latex(root / "paper" / "generated" / "study_table.tex", summary)

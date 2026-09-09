@@ -48,7 +48,7 @@ job_id="$(sbatch --parsable \
   --time=01:00:00 \
   --output="$run_root/logs/slurm-%A_%a.out" \
   --export="ALL,CFRT_REPO_ROOT=$repo_root,CFRT_RUN_ROOT=$run_root,CFRT_CONFIG_PATH=$run_root/meta/cluster.json" \
-  "$repo_root/cluster/narval/job.sh")"
+  "$repo_root/jobs/narval/job.sh")"
 
 printf '%s\n' "$job_id" > "$run_root/meta/slurm-job-id.txt"
 printf 'Submitted array job %s\nRun ID: %s\nRun directory: %s\n' "$job_id" "$run_id" "$run_root"

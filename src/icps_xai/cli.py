@@ -6,7 +6,7 @@ import argparse
 import json
 from pathlib import Path
 
-from .experiment import run_pilot
+from .evaluation.experiment import run_pilot
 
 
 def main() -> None:
@@ -21,4 +21,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

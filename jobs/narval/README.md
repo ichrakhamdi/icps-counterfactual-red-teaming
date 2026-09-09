@@ -18,20 +18,20 @@ git clone https://github.com/ichrakhamdi/icps-counterfactual-red-teaming.git
 cd icps-counterfactual-red-teaming
 
 export SLURM_ACCOUNT=def-YOUR-ALLOCATION
-bash cluster/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
+bash jobs/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
 ```
 
 The submit command prints the generated run ID. Use it for every later command:
 
 ```bash
 squeue -u "$USER"
-bash cluster/narval/aggregate.sh RUN_ID
+bash jobs/narval/aggregate.sh RUN_ID
 ```
 
 To choose a recognizable, still unique name:
 
 ```bash
-bash cluster/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
+bash jobs/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
 ```
 
 The array is throttled to ten simultaneous CPU tasks so it does not crowd other
@@ -39,7 +39,7 @@ work. Use a lower throttle while other jobs are active, for example:
 
 ```bash
 export CFRT_ARRAY_SPEC=0-29%4
-bash cluster/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
+bash jobs/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
 ```
 
 Override `CFRT_RUNS_ROOT` only when another scratch location is preferred. Set

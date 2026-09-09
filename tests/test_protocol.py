@@ -9,7 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from icps_xai.protocol import (
+from icps_xai.evaluation.protocol import (
     METHODS,
     aggregate_jobs,
     run_job,

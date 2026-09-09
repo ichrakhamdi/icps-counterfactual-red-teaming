@@ -1,6 +1,6 @@
 # Narval Runbook
 
-The detailed layout and commands are in `cluster/narval/README.md`. Every run
+The detailed layout and commands are in `jobs/narval/README.md`. Every run
 is isolated under:
 
 ```text
@@ -12,7 +12,7 @@ Run the local gate from a clean checkout, then submit:
 ```bash
 make local-gate
 export SLURM_ACCOUNT=def-YOUR-ALLOCATION
-bash cluster/narval/submit.sh
+bash jobs/narval/submit.sh
 ```
 
 The submission creates separate `jobs`, `logs`, `meta`, and `aggregate`
@@ -31,7 +31,7 @@ export CFRT_ARRAY_SPEC=0-29%4
 After the array finishes:
 
 ```bash
-bash cluster/narval/aggregate.sh RUN_ID
+bash jobs/narval/aggregate.sh RUN_ID
 ```
 
 Aggregation requires the original commit and all thirty compatible job files.

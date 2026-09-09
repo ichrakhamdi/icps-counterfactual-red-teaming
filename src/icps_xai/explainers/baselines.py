@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
-from .domain import Observation, ResponseAction, Trace
-from .responder import FrozenResponder
+from ..core.domain import Observation, ResponseAction, Trace
+from ..models.responder import FrozenResponder
 
 
 @dataclass(frozen=True)

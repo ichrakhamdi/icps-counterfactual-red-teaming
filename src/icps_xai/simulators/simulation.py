@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Protocol
 
-from .campaign import CampaignValidator
-from .domain import AttackStage, Campaign, Observation, ResponseAction, Trace, TraceStep
-from .plant import ThreeStageWaterPlant
-from .responder import FrozenResponder, QLearningResponder, StateKey
+from ..core.campaign import CampaignValidator
+from ..core.domain import AttackStage, Campaign, Observation, ResponseAction, Trace, TraceStep
+from ..models.plant import ThreeStageWaterPlant
+from ..models.responder import FrozenResponder, QLearningResponder, StateKey
 
 
 class ActingPolicy(Protocol):

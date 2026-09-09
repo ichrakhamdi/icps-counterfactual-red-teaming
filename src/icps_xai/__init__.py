@@ -1,9 +1,9 @@
 """Counterfactual XAI tools for autonomous ICPS response research."""
 
-from .campaign import CampaignValidator, reference_campaign
-from .counterfactual import CounterfactualSearch
-from .responder import QLearningResponder
-from .simulation import ICPSSimulator
+from .core.campaign import CampaignValidator, reference_campaign
+from .explainers.counterfactual import CounterfactualSearch
+from .models.responder import QLearningResponder
+from .simulators.simulation import ICPSSimulator
 
 __all__ = [
     "CampaignValidator",
@@ -12,4 +12,3 @@ __all__ = [
     "QLearningResponder",
     "reference_campaign",
 ]
-

@@ -4,7 +4,7 @@ set -euo pipefail
 
 : "${SCRATCH:?SCRATCH is not defined; run this script on Narval}"
 if [[ $# -ne 1 ]]; then
-  echo "Usage: bash cluster/narval/aggregate.sh RUN_ID" >&2
+  echo "Usage: bash jobs/narval/aggregate.sh RUN_ID" >&2
   exit 2
 fi
 

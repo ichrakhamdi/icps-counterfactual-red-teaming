@@ -1,0 +1,43 @@
+name: Reproducibility problem
+description: Report a code, protocol, installation, or result-reproduction problem.
+title: "[Reproducibility]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for helping improve the research artifact.
+  - type: input
+    id: commit
+    attributes:
+      label: Git commit
+      description: Paste the output of `git rev-parse HEAD`.
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python and platform
+      description: Include the Python version, operating system, and cluster name when applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and configuration
+      description: Provide the exact command and configuration file used.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: Include the complete error and the relevant log excerpt.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
