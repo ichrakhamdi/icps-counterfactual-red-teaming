@@ -15,7 +15,7 @@ Red-Teaming of Autonomous Threat-Response Agents in Industrial Cyber-Physical
 Systems.”** The [LaTeX manuscript](paper/main.tex) and
 [bibliography](paper/references.bib) are included. The paper is under
 preparation; confirmatory results will be added only after the frozen protocol
-has completed on Narval.
+has completed on Nibi.
 
 The software asks one operational question:
 
@@ -52,12 +52,12 @@ to the later contribution and are outside this repository.
 
 - A campaign-level counterfactual formulation for sequential autonomous
   industrial response.
-- A black-box beam search over campaign visibility, timing, duration, and
-  intensity with matched-budget baselines.
+- A black-box beam search over campaign target, visibility, timing, duration,
+  and intensity with matched-budget baselines.
 - Independent cyber and physical validation through topology replay and
   closed-loop simulation.
 - A deterministic, seed-separated evaluation protocol with strict shard
-  aggregation and a reproducible Narval workflow.
+  aggregation and a reproducible Nibi workflow.
 
 ## Proposed approach
 
@@ -93,9 +93,10 @@ execution modes.
 │   ├── 📄 local_gate.json          # Determinism-gate configuration
 │   └── 📄 cluster.json             # Frozen 30-seed confirmatory protocol
 ├── 📁 docs/
+│   ├── 📄 CONFIGURATION.md         # Tunable values and fixed model assumptions
 │   ├── 📄 EXPERIMENT_PROTOCOL.md   # Units, baselines, metrics, and statistics
-│   └── 📄 CLUSTER_RUNBOOK.md       # Narval execution and collection guide
-├── 📁 jobs/narval/
+│   └── 📄 CLUSTER_RUNBOOK.md       # Nibi execution and collection guide
+├── 📁 jobs/nibi/
 │   ├── 📄 submit.sh                # Create an isolated Slurm array run
 │   ├── 📄 job.sh                   # Execute one deterministic protocol shard
 │   ├── 📄 aggregate.sh             # Validate and aggregate all shards
@@ -112,6 +113,7 @@ execution modes.
 │   ├── 📄 run_study.py             # Multi-seed engineering study
 │   ├── 📄 run_protocol_job.py      # One confirmatory shard
 │   ├── 📄 run_local_protocol.py    # Complete protocol on one machine
+│   ├── 📄 preflight_protocol.py    # Validate config and expected job count
 │   ├── 📄 aggregate_protocol.py    # Strict aggregation and table generation
 │   └── 📄 check_local.py           # Pre-release verification gate
 ├── 📁 src/icps_xai/
@@ -191,7 +193,7 @@ LaTeX is installed.
 make paper
 ```
 
-## Confirmatory study on Narval
+## Confirmatory study on Nibi
 
 Each cluster submission is isolated from other work under
 `$SCRATCH/icps-counterfactual-red-teaming/runs/<RUN_ID>/`. The directory holds
@@ -203,20 +205,21 @@ git clone https://github.com/ichrakhamdi/icps-counterfactual-red-teaming.git
 cd icps-counterfactual-red-teaming
 
 export SLURM_ACCOUNT=def-YOUR-ALLOCATION
-export CFRT_ARRAY_SPEC=0-29%4
-bash jobs/narval/submit.sh cf-v1-$(date -u +%Y%m%dT%H%M%SZ)
+export CFRT_MAX_CONCURRENT=4
+bash jobs/nibi/submit.sh cf-v2-$(date -u +%Y%m%dT%H%M%SZ)
 ```
 
 Monitor and aggregate the run with:
 
 ```bash
 squeue -u "$USER"
-bash jobs/narval/aggregate.sh RUN_ID
+bash jobs/nibi/aggregate.sh RUN_ID
 ```
 
-Aggregation requires all 30 expected shards and rejects missing jobs,
-duplicates, dirty submissions, mixed configurations, and mixed commits. See
-the [Narval runbook](docs/CLUSTER_RUNBOOK.md) for collection and archival.
+The array size is derived from `configs/cluster.json`; the frozen protocol
+currently contains 30 seeds. Aggregation requires every expected shard and
+rejects missing jobs, duplicates, dirty submissions, mixed configurations, and mixed commits. See
+the [Nibi runbook](docs/CLUSTER_RUNBOOK.md) for collection and archival.
 
 ## Evaluation protocol
 
@@ -230,7 +233,8 @@ The comparison includes four methods under the same search budget:
 | Cyber-physical CF | Yes | Yes | Yes |
 
 The primary outcomes are target validity, cyber feasibility, physical validity,
-impact gain, edit cost, simulator calls, wall-clock time, and transfer validity.
+impact gain, edit cost, simulator calls, rejected campaign proposals,
+wall-clock time, and transfer validity.
 Training, development, and confirmatory seeds are disjoint. The full frozen
 design is in [EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md).
 
@@ -253,7 +257,7 @@ design is in [EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md).
   author     = {Hamdi, Ichrak},
   title      = {Counterfactual Red-Teaming for Autonomous ICPS Response},
   year       = {2026},
-  version    = {0.2.0},
+  version    = {0.2.1},
   url        = {https://github.com/ichrakhamdi/icps-counterfactual-red-teaming},
   license    = {MIT}
 }

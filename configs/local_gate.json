@@ -7,5 +7,17 @@
   "search_depth": 3,
   "beam_width": 18,
   "search_evaluation_budget": 400,
-  "minimum_impact_gain": 0.002
+  "minimum_impact_gain": 0.002,
+  "responder_learning_rate": 0.12,
+  "responder_discount": 0.97,
+  "response_costs": [0.0, 0.3, 1.2, 3.0],
+  "switching_cost": 0.01,
+  "seed_offsets": {"training": 10000, "scenario": 500, "transfer": 700},
+  "bootstrap_seed": 27090901,
+  "scenarios": [
+    {"name": "S0_reference", "offset": 0, "impact_magnitude": 1.12, "actuator": "inlet_valve", "precursor_visibility_scale": 1.0},
+    {"name": "S1_shifted", "offset": -2, "impact_magnitude": 1.0, "actuator": "inlet_valve", "precursor_visibility_scale": 1.0},
+    {"name": "S2_transfer_pump", "offset": 1, "impact_magnitude": 1.18, "actuator": "transfer_pump", "precursor_visibility_scale": 1.0},
+    {"name": "S3_lower_visibility", "offset": 0, "impact_magnitude": 1.08, "actuator": "inlet_valve", "precursor_visibility_scale": 0.78}
+  ]
 }

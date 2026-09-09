@@ -16,6 +16,7 @@ task_id="$SLURM_ARRAY_TASK_ID"
 export PYTHONPYCACHEPREFIX="${SLURM_TMPDIR:-/tmp}/icps-cf-pycache-${SLURM_JOB_ID}-${task_id}"
 
 cd "$CFRT_REPO_ROOT"
+"$python_bin" scripts/preflight_protocol.py --config "$CFRT_CONFIG_PATH" >/dev/null
 "$python_bin" scripts/run_protocol_job.py \
   --config "$CFRT_CONFIG_PATH" \
   --job-index "$task_id" \

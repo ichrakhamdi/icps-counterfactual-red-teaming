@@ -23,9 +23,17 @@ class FeasibilityReport:
 class PhysicalFeasibilityChecker:
     """Replays a campaign under both execution models and independent seeds."""
 
-    def __init__(self, horizon: int, seeds: tuple[int, ...] = (101, 211, 307)) -> None:
+    def __init__(
+        self,
+        horizon: int,
+        seeds: tuple[int, ...] = (101, 211, 307),
+        response_costs: tuple[float, float, float, float] = (0.0, 0.3, 1.2, 3.0),
+        switching_cost: float = 0.01,
+    ) -> None:
         self.horizon = horizon
         self.seeds = seeds
+        self.response_costs = response_costs
+        self.switching_cost = switching_cost
         self.validator = CampaignValidator()
 
     def check(self, campaign: Campaign, policy: FrozenResponder) -> FeasibilityReport:
@@ -36,7 +44,12 @@ class PhysicalFeasibilityChecker:
         if cyber.valid:
             for high_fidelity in (False, True):
                 simulator = ICPSSimulator(
-                    SimulationConfig(horizon=self.horizon, high_fidelity=high_fidelity)
+                    SimulationConfig(
+                        horizon=self.horizon,
+                        high_fidelity=high_fidelity,
+                        response_costs=self.response_costs,
+                        switching_cost=self.switching_cost,
+                    )
                 )
                 for seed in self.seeds:
                     trace = simulator.run(campaign, policy.clone(), seed=seed)

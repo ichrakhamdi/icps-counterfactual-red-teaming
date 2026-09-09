@@ -35,9 +35,10 @@ def stable_job(path: Path) -> dict[str, object]:
 def main() -> None:
     run([sys.executable, "-m", "compileall", "-q", "src", "scripts", "tests"])
     run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
-    run(["bash", "-n", "jobs/narval/job.sh"])
-    run(["bash", "-n", "jobs/narval/submit.sh"])
-    run(["bash", "-n", "jobs/narval/aggregate.sh"])
+    run([sys.executable, "scripts/preflight_protocol.py", "--config", "configs/cluster.json"])
+    run(["bash", "-n", "jobs/nibi/job.sh"])
+    run(["bash", "-n", "jobs/nibi/submit.sh"])
+    run(["bash", "-n", "jobs/nibi/aggregate.sh"])
 
     with tempfile.TemporaryDirectory(prefix="icps_cf_gate_", dir="/tmp") as directory:
         first = Path(directory) / "first"

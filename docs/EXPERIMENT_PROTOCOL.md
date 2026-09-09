@@ -14,7 +14,8 @@ confirmatory evaluation seeds must be disjoint.
    because it has no campaign generator, cyber and physical executability are
    reported as false rather than inferred from feature ranges.
 3. **Cyber-CF:** searches only candidates satisfying campaign prerequisites and
-   timing, without optimizing closed-loop physical impact.
+   timing; neither its frontier nor its final selection uses closed-loop
+   physical impact.
 4. **Cyber-physical CF:** the complete proposed method.
 
 ## Primary metrics
@@ -24,15 +25,19 @@ confirmatory evaluation seeds must be disjoint.
   independent campaign validator.
 - Physical validity: fraction of returned explanations producing finite,
   bounded process trajectories under both execution configurations.
-- Impact gain: counterfactual minus factual maximum band deviation.
+- Impact gain: counterfactual minus factual maximum band deviation; a result is
+  impact-valid only when it meets the configured minimum gain.
 - Edit cost: normalized visibility, timing, duration, and intensity changes.
 - Search cost: number of simulator executions and wall-clock time.
+- Proposal diagnostics: generated, validator-rejected, and duplicate campaign
+  candidates, reported separately from simulator evaluations.
 - Transfer validity: fraction preserving target validity in high-fidelity mode.
 
 ## Statistical analysis
 
-- Report seed-level medians and interquartile ranges.
-- Report paired interquartile-mean differences with bootstrap intervals.
+- Report medians and interquartile ranges across policy--scenario units.
+- Report paired mean validity-rate differences with bootstrap intervals,
+  resampling independent policy seeds rather than correlated scenarios.
 - The artifact computes descriptive medians, interquartile ranges, and paired
   bootstrap intervals. Null-hypothesis tests will be added only if the final
   paper retains claims that require them.

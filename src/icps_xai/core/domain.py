@@ -119,8 +119,8 @@ class Trace:
 class CampaignEdit:
     event_index: int
     field: str
-    before: float | int
-    after: float | int
+    before: float | int | str
+    after: float | int | str
     cost: float
 
 

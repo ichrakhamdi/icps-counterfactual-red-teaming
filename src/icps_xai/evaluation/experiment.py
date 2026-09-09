@@ -30,16 +30,32 @@ def _training_campaign(rng: random.Random, episode: int) -> Campaign:
     return Campaign(campaign.name, tuple(events))
 
 
-def train_responder(seed: int, episodes: int, horizon: int) -> QLearningResponder:
+def train_responder(
+    seed: int,
+    episodes: int,
+    horizon: int,
+    *,
+    learning_rate: float = 0.12,
+    discount: float = 0.97,
+    response_costs: tuple[float, float, float, float] = (0.0, 0.3, 1.2, 3.0),
+    switching_cost: float = 0.01,
+    training_seed_offset: int = 10_000,
+) -> QLearningResponder:
     rng = random.Random(seed)
-    learner = QLearningResponder(seed=seed)
-    simulator = ICPSSimulator(SimulationConfig(horizon=horizon))
+    learner = QLearningResponder(seed=seed, learning_rate=learning_rate, discount=discount)
+    simulator = ICPSSimulator(
+        SimulationConfig(
+            horizon=horizon,
+            response_costs=response_costs,
+            switching_cost=switching_cost,
+        )
+    )
     for episode in range(episodes):
         epsilon = max(0.03, 0.55 * (1.0 - episode / max(1, episodes)))
         simulator.train_episode(
             _training_campaign(rng, episode),
             learner,
-            seed=seed + 10_000 + episode,
+            seed=seed + training_seed_offset + episode,
             epsilon=epsilon,
         )
     return learner
@@ -54,9 +70,30 @@ def run_pilot(
     seed = int(config["seed"])
     episodes = int(config["training_episodes"])
     horizon = int(config["horizon"])
-    learner = train_responder(seed, episodes, horizon)
+    response_costs = tuple(float(value) for value in config["response_costs"])
+    if len(response_costs) != 4:
+        raise ValueError("response_costs must contain four values")
+    seed_offsets = config.get("seed_offsets", {})
+    if not isinstance(seed_offsets, dict):
+        raise ValueError("seed_offsets must be an object")
+    learner = train_responder(
+        seed,
+        episodes,
+        horizon,
+        learning_rate=float(config["responder_learning_rate"]),
+        discount=float(config["responder_discount"]),
+        response_costs=response_costs,  # type: ignore[arg-type]
+        switching_cost=float(config["switching_cost"]),
+        training_seed_offset=int(seed_offsets["training"]),
+    )
     frozen = learner.freeze()
-    simulator = ICPSSimulator(SimulationConfig(horizon=horizon))
+    simulator = ICPSSimulator(
+        SimulationConfig(
+            horizon=horizon,
+            response_costs=response_costs,  # type: ignore[arg-type]
+            switching_cost=float(config["switching_cost"]),
+        )
+    )
     search = CounterfactualSearch(
         simulator,
         config=SearchConfig(
@@ -64,7 +101,8 @@ def run_pilot(
             beam_width=int(config["beam_width"]),
             audit_lead=int(config["audit_lead"]),
             minimum_impact_gain=float(config["minimum_impact_gain"]),
-            seed=seed + 91,
+            seed=seed + int(seed_offsets["search"]),
+            max_evaluations=int(config["search_evaluation_budget"]),
         ),
     )
     factual = reference_campaign(name="held_out_reference", impact_magnitude=1.12)
@@ -85,9 +123,17 @@ def run_pilot(
             for event in result.counterfactual_campaign.events
             if event.stage is AttackStage.ACTUATOR_OVERRIDE
         )
-        transfer_simulator = ICPSSimulator(SimulationConfig(horizon=horizon, high_fidelity=True))
-        factual_transfer = transfer_simulator.run(result.factual_campaign, frozen, seed=seed + 191)
-        counterfactual_transfer = transfer_simulator.run(result.counterfactual_campaign, frozen, seed=seed + 191)
+        transfer_simulator = ICPSSimulator(
+            SimulationConfig(
+                horizon=horizon,
+                high_fidelity=True,
+                response_costs=response_costs,  # type: ignore[arg-type]
+                switching_cost=float(config["switching_cost"]),
+            )
+        )
+        transfer_seed = seed + int(seed_offsets["transfer"])
+        factual_transfer = transfer_simulator.run(result.factual_campaign, frozen, seed=transfer_seed)
+        counterfactual_transfer = transfer_simulator.run(result.counterfactual_campaign, frozen, seed=transfer_seed)
         transfer_factual_action = factual_transfer.steps[impact_time - int(config["audit_lead"])].action
         transfer_counterfactual_action = counterfactual_transfer.steps[impact_time - int(config["audit_lead"])].action
         transfer_factual_impact = maximum_band_deviation(factual_transfer, impact_time)

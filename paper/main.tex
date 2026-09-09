@@ -20,12 +20,12 @@ Feature-space counterfactual explanations may change detector scores, process
 measurements, or network events independently, even though those quantities are
 linked by attack prerequisites and process dynamics. This paper formulates
 counterfactual explanation as campaign-level red-teaming of a frozen threat-response
-policy. The proposed black-box search modifies the timing, visibility, duration,
-and intensity of fixed multi-stage campaigns while an independent validator
-enforces network reachability, privilege, temporal, and physical constraints.
-Every candidate is re-executed in a closed-loop three-stage industrial process.
-The returned explanation is the lowest-cost executable campaign that causes a
-weaker response and a larger physical impact. The evaluation compares random,
+policy. The proposed black-box search modifies the target, timing, visibility,
+duration, and intensity of fixed multi-stage campaigns. An independent validator enforces
+network reachability, privilege, and temporal constraints, and closed-loop
+replay checks physical execution. Every candidate is re-executed in a
+three-stage industrial process. The returned explanation is the lowest-cost
+qualifying campaign found within the declared search budget. The evaluation compares random,
 feature-level, cyber-valid, and cyber-physical counterfactual generation and
 tests whether explanations remain valid under a higher-fidelity execution
 configuration. The accompanying engineering pilot verifies the complete
@@ -91,6 +91,14 @@ advance policy transparency, but do not establish that a counterfactual change
 returned to the analyst corresponds to an executable industrial campaign with
 a reproduced physical consequence.
 
+CIPHER-A uses LLM-generated counterfactual consequence scenarios to validate
+response-plan actions and updates an attacker model after execution
+~\cite{kizhakel2026cipher}. Its object is the predicted consequence of a
+proposed defensive action in enterprise incident response. The object here is
+a minimal executable change to the attack campaign that flips a frozen RL
+responder, with the changed physical consequence reproduced in a closed ICPS
+loop.
+
 The distinction is material in industrial systems. Stealthy attacks are already
 designed under detector and process constraints~\cite{urbina2016stealthy}, and
 concealment attacks explicitly manipulate evidence while preserving the attack
@@ -129,10 +137,14 @@ from the nominal operating point after impact. The feasibility sets represent
 attack prerequisites, network reachability and privilege, temporal order, and
 closed-loop physical execution. The edit cost is
 \begin{equation}
-C(\Delta)=\sum_j w_v|\Delta v_j|+w_t|\Delta t_j|/T
- +w_d|\Delta d_j|/T+w_m|\Delta m_j|,
+\begin{aligned}
+C(\Delta)=\sum_j\bigl(&w_v|\Delta v_j|+w_t|\Delta t_j|/T\\
+ &+w_d|\Delta d_j|/T+w_m|\Delta m_j|
+ +w_a\mathbb{I}[\Delta a_j]\bigr),
+\end{aligned}
 \end{equation}
-where $v,t,d,m$ denote visibility, time, duration, and magnitude.
+where $v,t,d,m,a$ denote visibility, time, duration, magnitude, and target
+asset.
 
 Equation~\eqref{eq:cf} makes the explanation adversarial in purpose but
 diagnostic in use: it identifies a feasible weakness without changing or
@@ -163,8 +175,10 @@ together.
 The method uses a bounded beam search. At every depth it generates local changes
 to one campaign event, validates the resulting campaign, executes it with the
 frozen responder, and ranks it by response reduction, impact increase, and edit
-cost. Duplicate campaign signatures are evaluated once. Search terminates at a
-fixed depth, and the least-cost candidate satisfying~\eqref{eq:cf} is revalidated
+cost. Simulation outcomes for duplicate campaign signatures are cached. When
+the same campaign is reached through several edit paths, the lowest-cost path
+is retained. Search terminates at a fixed depth and evaluation budget; the
+least-cost satisfying candidate found inside that bounded search is revalidated
 and replayed before reporting.
 
 The policy interface contains only \texttt{reset} and \texttt{act}. No gradient,
@@ -180,9 +194,10 @@ The independent evaluation environment contains three coupled tanks, four
 flows, three PLC assets, a historian, an engineering workstation, and separated
 enterprise and control access points. It follows the type of closed-loop
 evaluation enabled by water-treatment testbeds such as SWaT~\cite{mathur2016swat}
-without using its recorded data. Measurement replay changes the delivered level
-while retaining the hidden process state; actuator override changes inlet and
-outlet behavior.
+without using its recorded data. Measurement replay changes only its targeted
+delivered sensor while retaining the hidden process state. An inlet-valve
+override changes inflow, while a transfer-pump override changes inter-stage
+flow.
 
 The audited policy is a flat tabular Q-learning responder with exponentially
 weighted evidence memory. It selects monitor, inspect, restrict, or backup.
@@ -194,19 +209,22 @@ as a new response algorithm.
 \subsection{Baselines and Metrics}
 
 Four generators are compared: random valid edits, direct feature-space
-counterfactuals, cyber-valid search without physical-impact ranking, and the
-complete cyber-physical method. Target validity is the fraction that selects a
+counterfactuals, cyber-valid search whose frontier and final selection do not
+use physical outcomes, and the complete cyber-physical method. Target validity is the fraction that selects a
 weaker response at the audit instant. Cyber feasibility is acceptance by the
 independent campaign validator. Physical validity requires a complete bounded
 trajectory. Further outcomes are edit cost, impact gain, simulator evaluations,
-wall-clock time, and explanation stability across nearby initial conditions.
+wall-clock time, and explanation transfer under the perturbed execution model.
 
 Selected counterfactuals are then replayed under a smaller integration step,
 measurement quantisation, additional integration substeps, and perturbed process
 coefficients. Counterfactual transfer validity records whether both the weaker
 decision and positive impact gap remain. Training, development, and evaluation
 seeds are disjoint. Confirmatory results will be reported over independent seeds
-using medians, interquartile ranges, and paired bootstrap intervals.
+using medians, interquartile ranges, and paired bootstrap intervals. Because the
+four scenarios evaluated under one learned policy are correlated, paired
+validity differences are first averaged within each policy and the bootstrap
+resamples policy seeds.
 
 \InputIfFileExists{generated/confirmatory_table.tex}{}{}
 

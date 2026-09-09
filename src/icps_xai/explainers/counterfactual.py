@@ -48,6 +48,9 @@ class CounterfactualSearch:
         self.validator = validator or CampaignValidator()
         self.config = config or SearchConfig()
         self.last_evaluations = 0
+        self.last_generated_candidates = 0
+        self.last_invalid_candidates = 0
+        self.last_duplicate_candidates = 0
 
     @staticmethod
     def _impact_time(campaign: Campaign) -> int:
@@ -64,11 +67,23 @@ class CounterfactualSearch:
         impact = maximum_band_deviation(trace, impact_time)
         return action, impact
 
-    @staticmethod
-    def _rank(node: _Node, factual_action: int, factual_impact: float) -> tuple[float, float, float]:
+    def _rank(
+        self, node: _Node, factual_action: int, factual_impact: float
+    ) -> tuple[float, float, float]:
         action_drop = factual_action - node.action_value
         impact_gain = node.impact - factual_impact
-        return action_drop, impact_gain, -node.cost
+        if self.config.require_impact_gain:
+            return action_drop, impact_gain, -node.cost
+        # The cyber-only ablation must not use a physical outcome to guide its
+        # frontier. Its proposal order depends only on the policy target and
+        # campaign edit cost.
+        return action_drop, -node.cost, 0.0
+
+    def _solution_key(
+        self, node: _Node, factual_action: int, factual_impact: float
+    ) -> tuple[float, float, float]:
+        impact_priority = -(node.impact - factual_impact) if self.config.require_impact_gain else 0.0
+        return node.cost, -(factual_action - node.action_value), impact_priority
 
     def search(self, factual: Campaign, policy: FrozenResponder) -> CounterfactualResult | None:
         validation = self.validator.validate(factual, self.simulator.config.horizon)
@@ -76,25 +91,41 @@ class CounterfactualSearch:
             raise ValueError("factual campaign is invalid")
         factual_action, factual_impact = self._evaluate(factual, policy)
         frontier = [_Node(factual, (), factual_action, factual_impact)]
-        seen = {factual.signature()}
+        factual_signature = factual.signature()
+        best_path_cost = {factual_signature: 0.0}
+        evaluation_cache = {factual_signature: (factual_action, factual_impact)}
         evaluations = 1
         self.last_evaluations = evaluations
+        self.last_generated_candidates = 0
+        self.last_invalid_candidates = 0
+        self.last_duplicate_candidates = 0
         valid_solutions: list[_Node] = []
 
         for _ in range(self.config.depth):
             expanded: list[_Node] = []
             for node in frontier:
                 for candidate, edit in campaign_neighbors(node.campaign):
+                    self.last_generated_candidates += 1
                     signature = candidate.signature()
-                    if signature in seen:
+                    child_edits = node.edits + (edit,)
+                    child_cost = sum(item.cost for item in child_edits)
+                    if child_cost >= best_path_cost.get(signature, float("inf")):
+                        self.last_duplicate_candidates += 1
                         continue
-                    seen.add(signature)
                     if not self.validator.validate(candidate, self.simulator.config.horizon).valid:
+                        self.last_invalid_candidates += 1
                         continue
-                    action_value, impact = self._evaluate(candidate, policy)
-                    evaluations += 1
-                    self.last_evaluations = evaluations
-                    child = _Node(candidate, node.edits + (edit,), action_value, impact)
+                    best_path_cost[signature] = child_cost
+                    cached = evaluation_cache.get(signature)
+                    if cached is None:
+                        if evaluations >= self.config.max_evaluations:
+                            break
+                        cached = self._evaluate(candidate, policy)
+                        evaluation_cache[signature] = cached
+                        evaluations += 1
+                        self.last_evaluations = evaluations
+                    action_value, impact = cached
+                    child = _Node(candidate, child_edits, action_value, impact)
                     expanded.append(child)
                     impact_valid = (
                         impact - factual_impact >= self.config.minimum_impact_gain
@@ -103,8 +134,6 @@ class CounterfactualSearch:
                     )
                     if action_value < factual_action and impact_valid:
                         valid_solutions.append(child)
-                    if evaluations >= self.config.max_evaluations:
-                        break
                 if evaluations >= self.config.max_evaluations:
                     break
 
@@ -122,11 +151,7 @@ class CounterfactualSearch:
             return None
         selected = min(
             valid_solutions,
-            key=lambda node: (
-                node.cost,
-                -(factual_action - node.action_value),
-                -(node.impact - factual_impact),
-            ),
+            key=lambda node: self._solution_key(node, factual_action, factual_impact),
         )
         from ..core.domain import ResponseAction
 
@@ -154,16 +179,21 @@ class RandomValidSearch(CounterfactualSearch):
         rng = random.Random(self.config.seed)
         evaluations = 1
         self.last_evaluations = evaluations
+        self.last_generated_candidates = 0
+        self.last_invalid_candidates = 0
+        self.last_duplicate_candidates = 0
         solutions: list[_Node] = []
         while evaluations < self.config.max_evaluations:
             campaign = factual
             edits: tuple[CampaignEdit, ...] = ()
             for _ in range(rng.randint(1, self.config.depth)):
-                choices = [
-                    pair
-                    for pair in campaign_neighbors(campaign)
-                    if self.validator.validate(pair[0], self.simulator.config.horizon).valid
-                ]
+                choices = []
+                for pair in campaign_neighbors(campaign):
+                    self.last_generated_candidates += 1
+                    if self.validator.validate(pair[0], self.simulator.config.horizon).valid:
+                        choices.append(pair)
+                    else:
+                        self.last_invalid_candidates += 1
                 if not choices:
                     break
                 campaign, edit = rng.choice(choices)
@@ -182,7 +212,7 @@ class RandomValidSearch(CounterfactualSearch):
             return None
         selected = min(
             solutions,
-            key=lambda node: (node.cost, -(factual_action - node.action_value), -(node.impact - factual_impact)),
+            key=lambda node: self._solution_key(node, factual_action, factual_impact),
         )
         from ..core.domain import ResponseAction
 

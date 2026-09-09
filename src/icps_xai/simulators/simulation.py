@@ -20,7 +20,8 @@ class ActingPolicy(Protocol):
 class SimulationConfig:
     horizon: int = 100
     high_fidelity: bool = False
-    response_costs: tuple[float, float, float, float] = (0.0, 0.015, 0.06, 0.10)
+    response_costs: tuple[float, float, float, float] = (0.0, 0.3, 1.2, 3.0)
+    switching_cost: float = 0.01
 
 
 class ICPSSimulator:
@@ -34,6 +35,13 @@ class ICPSSimulator:
             if event.stage is stage and event.time <= time < event.time + event.duration:
                 return event.magnitude
         return 0.0
+
+    @staticmethod
+    def _active_asset(campaign: Campaign, stage: AttackStage, time: int) -> str | None:
+        for event in campaign.events:
+            if event.stage is stage and event.time <= time < event.time + event.duration:
+                return event.asset
+        return None
 
     @staticmethod
     def _visible(campaign: Campaign, stage: AttackStage, time: int) -> float:
@@ -55,7 +63,14 @@ class ICPSSimulator:
         previous_action: ResponseAction,
     ) -> Observation:
         replay = self._active(campaign, AttackStage.MEASUREMENT_REPLAY, time)
-        delivered = plant.delivered_levels(replay_strength=min(0.94, 0.80 * replay))
+        replay_asset = self._active_asset(campaign, AttackStage.MEASUREMENT_REPLAY, time)
+        replay_sensor = {
+            "level_sensor_1": 0,
+            "level_sensor_2": 1,
+        }.get(replay_asset)
+        delivered = plant.delivered_levels(
+            replay_strength=min(0.94, 0.80 * replay), replay_sensor=replay_sensor
+        )
         residual = max(abs(actual - observed) for actual, observed in zip(plant.state.levels, delivered))
         auth = max(
             self._visible(campaign, AttackStage.CREDENTIAL_ACCESS, time),
@@ -82,6 +97,7 @@ class ICPSSimulator:
         state_levels: tuple[float, float, float],
         attack: float,
         action: ResponseAction,
+        previous_action: ResponseAction,
     ) -> float:
         deviation = sum(abs(level - target) for level, target in zip(state_levels, (0.66, 0.62, 0.58)))
         outside = sum(not (0.20 <= level <= 1.12) for level in state_levels)
@@ -92,6 +108,7 @@ class ICPSSimulator:
             + 30.0 * outside
             + 2.8 * residual_attack
             + self.config.response_costs[int(action)]
+            + self.config.switching_cost * float(action is not previous_action)
         )
 
     def run(self, campaign: Campaign, policy: ActingPolicy, seed: int = 0) -> Trace:
@@ -107,8 +124,9 @@ class ICPSSimulator:
             observation = self._observation(plant, campaign, time, previous_action)
             action = policy.act(observation)
             attack = self._active(campaign, AttackStage.ACTUATOR_OVERRIDE, time)
-            state = plant.step(observation.delivered_levels, attack, action)
-            reward = self._reward(state.levels, attack, action)
+            attack_asset = self._active_asset(campaign, AttackStage.ACTUATOR_OVERRIDE, time)
+            state = plant.step(observation.delivered_levels, attack, attack_asset, action)
+            reward = self._reward(state.levels, attack, action, previous_action)
             steps.append(TraceStep(time, state, observation, action, self._stage(campaign, time), attack, reward))
             previous_action = action
         return Trace(campaign, tuple(steps))
@@ -137,8 +155,9 @@ class ICPSSimulator:
                 learner.update(old_state, old_action, old_reward, state_key)
             action = learner.select(state_key, epsilon)
             attack = self._active(campaign, AttackStage.ACTUATOR_OVERRIDE, time)
-            state = plant.step(observation.delivered_levels, attack, action)
-            reward = self._reward(state.levels, attack, action)
+            attack_asset = self._active_asset(campaign, AttackStage.ACTUATOR_OVERRIDE, time)
+            state = plant.step(observation.delivered_levels, attack, attack_asset, action)
+            reward = self._reward(state.levels, attack, action, previous_action)
             previous_transition = state_key, action, reward
             previous_action = action
             total += reward

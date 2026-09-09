@@ -114,6 +114,11 @@ def campaign_neighbors(campaign: Campaign) -> list[tuple[Campaign, CampaignEdit]
         # the observable preparation path leading to the audited decision.
         if event.stage is AttackStage.ACTUATOR_OVERRIDE:
             continue
+        for asset in sorted(ASSETS_BY_STAGE[event.stage] - {event.asset}):
+            edit = CampaignEdit(index, "asset", event.asset, asset, 1.0)
+            neighbors.append(
+                (campaign.with_event(index, event.edited(asset=asset), f"a{index}={asset}"), edit)
+            )
         for factor in (0.75, 0.5):
             value = round(max(0.08, event.visibility * factor), 4)
             if value < event.visibility:

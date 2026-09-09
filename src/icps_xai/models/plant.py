@@ -33,13 +33,17 @@ class ThreeStageWaterPlant:
         self._history = [self.state.levels]
         return self.state
 
-    def delivered_levels(self, replay_strength: float) -> tuple[float, float, float]:
+    def delivered_levels(
+        self, replay_strength: float, replay_sensor: int | None = None
+    ) -> tuple[float, float, float]:
         true = self.state.levels
         if replay_strength > 0 and len(self._history) > 12:
             replayed = self._history[-12]
             values = tuple(
                 (1.0 - replay_strength) * actual + replay_strength * old
-                for actual, old in zip(true, replayed)
+                if replay_sensor is None or index == replay_sensor
+                else actual
+                for index, (actual, old) in enumerate(zip(true, replayed))
             )
         else:
             values = true
@@ -53,6 +57,7 @@ class ThreeStageWaterPlant:
         self,
         delivered: tuple[float, float, float],
         attack_intensity: float,
+        attack_asset: str | None,
         response: ResponseAction,
     ) -> PlantState:
         levels = list(self.state.levels)
@@ -67,11 +72,15 @@ class ThreeStageWaterPlant:
         for _ in range(self.substeps):
             controller_levels = levels if response is ResponseAction.BACKUP else list(delivered)
             inlet = _clip(0.16 + 0.90 * (self.target[0] - controller_levels[0]), 0.01, 0.36)
-            inlet += 0.24 * effective_attack
             flow12 = _clip(0.105 + 0.45 * (levels[0] - levels[1]), 0.01, 0.28)
             flow23 = _clip(0.095 + 0.42 * (levels[1] - levels[2]), 0.01, 0.26)
             outlet = _clip(0.085 + 0.35 * (levels[2] - self.target[2]), 0.02, 0.22)
-            outlet *= 1.0 - 0.45 * effective_attack
+            if attack_asset == "inlet_valve":
+                inlet += 0.24 * effective_attack
+            elif attack_asset == "transfer_pump":
+                flow12 *= 1.0 - 0.65 * effective_attack
+            elif attack_asset is not None and effective_attack > 0.0:
+                raise ValueError(f"unsupported actuator attack target: {attack_asset}")
 
             step_dt = self.dt / self.substeps
             derivatives = (

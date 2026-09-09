@@ -2,9 +2,9 @@
 # Validate a complete isolated run and generate final artifacts in that run only.
 set -euo pipefail
 
-: "${SCRATCH:?SCRATCH is not defined; run this script on Narval}"
+: "${SCRATCH:?SCRATCH is not defined; run this script on Nibi}"
 if [[ $# -ne 1 ]]; then
-  echo "Usage: bash jobs/narval/aggregate.sh RUN_ID" >&2
+  echo "Usage: bash jobs/nibi/aggregate.sh RUN_ID" >&2
   exit 2
 fi
 
@@ -31,6 +31,8 @@ module load StdEnv/2023
 module load "${CFRT_PYTHON_MODULE:-python/3.11}"
 python_bin="${PYTHON_BIN:-python3}"
 
+"$python_bin" "$repo_root/scripts/preflight_protocol.py" --config "$config" >/dev/null
+
 mkdir -p "$run_root/aggregate"
 "$python_bin" "$repo_root/scripts/aggregate_protocol.py" \
   --config "$config" \
@@ -40,7 +42,8 @@ mkdir -p "$run_root/aggregate"
 
 (
   cd "$run_root"
-  sha256sum meta/cluster.json meta/git-commit.txt jobs/job_*.json \
+  sha256sum meta/cluster.json meta/git-commit.txt meta/cluster-name.txt \
+    meta/array-spec.txt meta/memory.txt meta/walltime.txt jobs/job_*.json \
     aggregate/confirmatory.json aggregate/confirmatory.csv \
     aggregate/confirmatory_table.tex > aggregate/SHA256SUMS
 )
